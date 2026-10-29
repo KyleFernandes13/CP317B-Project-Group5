@@ -5,3 +5,6 @@ venv/
 .env
 instance/
 .vscode/
+*.db
+*.sqlite
+*.sqlite3
