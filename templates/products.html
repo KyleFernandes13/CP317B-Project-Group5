@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container header-content">
+            <h1 class="logo">Group 5 Store</h1>
+
+            <nav>
+                <a href="{{ url_for('product_catalogue') }}">Products</a>
+                <a href="#">Cart</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="catalogue-header">
+            <h2>Products</h2>
+            <p>Browse our available products.</p>
+        </section>
+
+        <section class="product-grid">
+            {% for product in products %}
+                <article class="product-card">
+
+                    <div class="product-image">
+                        {% if product["image"] %}
+                            <img
+                                src="{{ url_for('static', filename='images/' + product['image']) }}"
+                                alt="{{ product['name'] }}"
+                            >
+                        {% else %}
+                            <div class="image-placeholder">
+                                No Image
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="product-info">
+                        <h3>{{ product["name"] }}</h3>
+
+                        <p class="product-description">
+                            {{ product["description"] }}
+                        </p>
+
+                        <p class="product-price">
+                            ${{ "%.2f"|format(product["price"]) }}
+                        </p>
+
+                        <a
+                            class="button"
+                            href="{{ url_for('product_details', product_id=product['id']) }}"
+                        >
+                            View Product
+                        </a>
+                    </div>
+
+                </article>
+            {% else %}
+                <p>No products are currently available.</p>
+            {% endfor %}
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,138 @@
+"""Main Flask application for the E-Commerce Store Management System."""
+
+import sqlite3
+from pathlib import Path
+
+from flask import Flask, abort, render_template
+
+
+app = Flask(__name__)
+
+BASE_DIR = Path(__file__).resolve().parent
+DATABASE = BASE_DIR / "database" / "store.db"
+
+
+def get_db_connection():
+    """Create and return a connection to the SQLite database."""
+    connection = sqlite3.connect(DATABASE)
+    connection.row_factory = sqlite3.Row
+    return connection
+
+
+def add_sample_products():
+    """Add sample products if the products table is currently empty."""
+    connection = get_db_connection()
+
+    product_count = connection.execute(
+        "SELECT COUNT(*) FROM products"
+    ).fetchone()[0]
+
+    if product_count == 0:
+        sample_products = [
+            (
+                "Wireless Headphones",
+                "Comfortable wireless headphones with clear sound and long battery life.",
+                79.99,
+                ""
+            ),
+            (
+                "Mechanical Keyboard",
+                "A compact mechanical keyboard designed for gaming and everyday use.",
+                89.99,
+                ""
+            ),
+            (
+                "Wireless Mouse",
+                "Lightweight wireless mouse with adjustable sensitivity.",
+                39.99,
+                ""
+            ),
+            (
+                "USB-C Hub",
+                "Multi-port USB-C hub with USB, HDMI, and card reader connections.",
+                49.99,
+                ""
+            ),
+            (
+                "Laptop Stand",
+                "Adjustable aluminum laptop stand for a more comfortable workspace.",
+                34.99,
+                ""
+            ),
+            (
+                "Webcam",
+                "1080p webcam with built-in microphone for video calls and meetings.",
+                59.99,
+                ""
+            )
+        ]
+
+        connection.executemany(
+            """
+            INSERT INTO products (name, description, price, image)
+            VALUES (?, ?, ?, ?)
+            """,
+            sample_products
+        )
+
+        connection.commit()
+
+    connection.close()
+
+
+def get_products():
+    """Return all products stored in the database."""
+    connection = get_db_connection()
+
+    product_rows = connection.execute(
+        "SELECT * FROM products ORDER BY id"
+    ).fetchall()
+
+    connection.close()
+
+    return product_rows
+
+
+@app.route("/")
+def home():
+    """Display the product catalogue on the home page."""
+    return render_template(
+        "products.html",
+        products=get_products()
+    )
+
+
+@app.route("/products")
+def product_catalogue():
+    """Display all available products."""
+    return render_template(
+        "products.html",
+        products=get_products()
+    )
+
+
+@app.route("/products/<int:product_id>")
+def product_details(product_id):
+    """Display the details for one selected product."""
+    connection = get_db_connection()
+
+    product = connection.execute(
+        "SELECT * FROM products WHERE id = ?",
+        (product_id,)
+    ).fetchone()
+
+    connection.close()
+
+    if product is None:
+        abort(404)
+
+    return render_template(
+        "product_details.html",
+        product=product
+    )
+
+
+if __name__ == "__main__":
+    add_sample_products()
+    app.run(debug=True)
+    
