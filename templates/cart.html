@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container header-content">
+            <h1 class="logo">Group 5 Store</h1>
+
+            <nav>
+                <a href="{{ url_for('product_catalogue') }}">Products</a>
+                <a href="{{ url_for('cart') }}">Cart</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="catalogue-header">
+            <h2>Shopping Cart</h2>
+            <p>Review your items and update their quantities.</p>
+        </section>
+
+        {% if cart_items %}
+            <section class="cart-panel">
+                <div class="cart-table-container">
+                    <table class="cart-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Product</th>
+                                <th scope="col">Price</th>
+                                <th scope="col">Quantity</th>
+                                <th scope="col">Subtotal</th>
+                                <th scope="col">Remove</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in cart_items %}
+                                <tr>
+                                    <td>{{ item["name"] }}</td>
+                                    <td>${{ "%.2f"|format(item["price"]) }}</td>
+                                    <td>
+                                        <form
+                                            class="cart-quantity-form"
+                                            action="{{ url_for('update_cart_item', item_id=item['id']) }}"
+                                            method="post"
+                                        >
+                                            <label class="cart-quantity-label" for="quantity-{{ item['id'] }}">
+                                                Quantity for {{ item["name"] }}
+                                            </label>
+                                            <input
+                                                type="number"
+                                                id="quantity-{{ item['id'] }}"
+                                                name="quantity"
+                                                value="{{ item['quantity'] }}"
+                                                min="1"
+                                                required
+                                            >
+                                            <button type="submit" class="button">Update</button>
+                                        </form>
+                                    </td>
+                                    <td>${{ "%.2f"|format(item["subtotal"]) }}</td>
+                                    <td>
+                                        <form
+                                            action="{{ url_for('remove_cart_item', item_id=item['id']) }}"
+                                            method="post"
+                                        >
+                                            <button
+                                                type="submit"
+                                                class="button"
+                                                aria-label="Remove {{ item['name'] }}"
+                                            >
+                                                Remove
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="cart-total">Total: ${{ "%.2f"|format(total) }}</p>
+            </section>
+        {% else %}
+            <section class="cart-panel">
+                <p>Your cart is empty.</p>
+            </section>
+        {% endif %}
+
+        <a class="back-link" href="{{ url_for('product_catalogue') }}">
+            Continue Shopping
+        </a>
+    </main>
+</body>
+</html>
