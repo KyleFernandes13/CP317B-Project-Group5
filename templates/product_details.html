@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product["name"] }}</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container header-content">
+            <h1 class="logo">Group 5 Store</h1>
+
+            <nav>
+                <a href="{{ url_for('product_catalogue') }}">Products</a>
+                <a href="#">Cart</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <a
+            class="back-link"
+            href="{{ url_for('product_catalogue') }}"
+        >
+            ← Back to Products
+        </a>
+
+        <section class="product-details">
+
+            <div class="details-image">
+                {% if product["image"] %}
+                    <img
+                        src="{{ url_for('static', filename='images/' + product['image']) }}"
+                        alt="{{ product['name'] }}"
+                    >
+                {% else %}
+                    <div class="image-placeholder large-placeholder">
+                        No Image
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="details-info">
+                <h2>{{ product["name"] }}</h2>
+
+                <p class="details-price">
+                    ${{ "%.2f"|format(product["price"]) }}
+                </p>
+
+                <p class="details-description">
+                    {{ product["description"] }}
+                </p>
+
+                <form action="#" method="post">
+                    <label for="quantity">Quantity</label>
+
+                    <input
+                        type="number"
+                        id="quantity"
+                        name="quantity"
+                        value="1"
+                        min="1"
+                    >
+
+                    <button
+                        type="submit"
+                        class="button add-cart-button"
+                    >
+                        Add to Cart
+                    </button>
+                </form>
+            </div>
+
+        </section>
+    </main>
+</body>
+</html>
