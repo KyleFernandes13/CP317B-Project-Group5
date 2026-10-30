@@ -1,12 +1,28 @@
 """Main Flask application for the E-Commerce Store Management System."""
 
+import os
 import sqlite3
+from functools import wraps
 from pathlib import Path
 
-from flask import Flask, abort, render_template
+from flask import (
+    Flask,
+    abort,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+from werkzeug.security import check_password_hash
 
 
 app = Flask(__name__)
+
+app.config["SECRET_KEY"] = os.environ.get(
+    "FLASK_SECRET_KEY",
+    "sprint1-development-key"
+)
 
 BASE_DIR = Path(__file__).resolve().parent
 DATABASE = BASE_DIR / "database" / "store.db"
@@ -17,6 +33,18 @@ def get_db_connection():
     connection = sqlite3.connect(DATABASE)
     connection.row_factory = sqlite3.Row
     return connection
+
+
+def login_required(view_function):
+    """Require a user to be logged in before viewing a page."""
+    @wraps(view_function)
+    def wrapped_view(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+
+        return view_function(*args, **kwargs)
+
+    return wrapped_view
 
 
 def add_sample_products():
@@ -93,16 +121,59 @@ def get_products():
     return product_rows
 
 
-@app.route("/")
-def home():
-    """Display the product catalogue on the home page."""
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    """Allow a customer to log in using stored account credentials."""
+    error = None
+
+    if request.method == "POST":
+        email = request.form["email"].strip().lower()
+        password = request.form["password"]
+
+        connection = get_db_connection()
+
+        user = connection.execute(
+            "SELECT * FROM users WHERE email = ?",
+            (email,)
+        ).fetchone()
+
+        connection.close()
+
+        if user is None or not check_password_hash(
+            user["password_hash"],
+            password
+        ):
+            error = "Invalid email or password."
+        else:
+            session.clear()
+            session["user_id"] = user["id"]
+            session["user_email"] = user["email"]
+            session["user_role"] = user["role"]
+
+            return redirect(url_for("product_catalogue"))
+
     return render_template(
-        "products.html",
-        products=get_products()
+        "login.html",
+        error=error
     )
 
 
+@app.route("/logout")
+def logout():
+    """Log the current user out and return to the login page."""
+    session.clear()
+    return redirect(url_for("login"))
+
+
+@app.route("/")
+@login_required
+def home():
+    """Redirect logged-in users to the product catalogue."""
+    return redirect(url_for("product_catalogue"))
+
+
 @app.route("/products")
+@login_required
 def product_catalogue():
     """Display all available products."""
     return render_template(
@@ -112,6 +183,7 @@ def product_catalogue():
 
 
 @app.route("/products/<int:product_id>")
+@login_required
 def product_details(product_id):
     """Display the details for one selected product."""
     connection = get_db_connection()
@@ -135,4 +207,3 @@ def product_details(product_id):
 if __name__ == "__main__":
     add_sample_products()
     app.run(debug=True)
-    
