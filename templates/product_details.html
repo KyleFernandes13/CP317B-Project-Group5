@@ -18,7 +18,7 @@
 
             <nav>
                 <a href="{{ url_for('product_catalogue') }}">Products</a>
-                <a href="#">Cart</a>
+                <a href="{{ url_for('cart') }}">Cart</a>
                 <a href="{{ url_for('logout') }}">Logout</a>
             </nav>
         </div>
@@ -58,7 +58,10 @@
                     {{ product["description"] }}
                 </p>
 
-                <form action="#" method="post">
+                <form
+                    action="{{ url_for('add_to_cart', product_id=product['id']) }}"
+                    method="post"
+                >
                     <label for="quantity">Quantity</label>
 
                     <input
@@ -67,6 +70,7 @@
                         name="quantity"
                         value="1"
                         min="1"
+                        required
                     >
 
                     <button
