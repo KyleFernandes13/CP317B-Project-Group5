@@ -1,7 +1,6 @@
 """Initialize the SQLite database and create fake local test accounts."""
 
 import sqlite3
-from getpass import getpass
 from pathlib import Path
 
 from werkzeug.security import generate_password_hash
@@ -13,7 +12,9 @@ SCHEMA = BASE_DIR / "schema.sql"
 
 TEST_EMAIL = "customer@test.com"
 TEST_PASSWORD = "password123"
+
 ADMIN_EMAIL = "admin@test.com"
+ADMIN_PASSWORD = "admin123"
 
 
 def initialize_database():
@@ -23,7 +24,7 @@ def initialize_database():
     with open(SCHEMA, "r", encoding="utf-8") as schema_file:
         connection.executescript(schema_file.read())
 
-    password_hash = generate_password_hash(TEST_PASSWORD)
+    customer_password_hash = generate_password_hash(TEST_PASSWORD)
 
     existing_user = connection.execute(
         "SELECT id FROM users WHERE email = ?",
@@ -37,7 +38,11 @@ def initialize_database():
             SET password_hash = ?, role = ?
             WHERE email = ?
             """,
-            (password_hash, "customer", TEST_EMAIL)
+            (
+                customer_password_hash,
+                "customer",
+                TEST_EMAIL
+            )
         )
     else:
         connection.execute(
@@ -45,20 +50,34 @@ def initialize_database():
             INSERT INTO users (email, password_hash, role)
             VALUES (?, ?, ?)
             """,
-            (TEST_EMAIL, password_hash, "customer")
+            (
+                TEST_EMAIL,
+                customer_password_hash,
+                "customer"
+            )
         )
+
+    admin_password_hash = generate_password_hash(ADMIN_PASSWORD)
 
     existing_admin = connection.execute(
         "SELECT id FROM users WHERE email = ?",
         (ADMIN_EMAIL,)
     ).fetchone()
 
-    if existing_admin is None:
-        admin_password = getpass("Choose a fake local admin password: ")
-
-        while not admin_password:
-            admin_password = getpass("Enter a non-empty fake admin password: ")
-
+    if existing_admin:
+        connection.execute(
+            """
+            UPDATE users
+            SET password_hash = ?, role = ?
+            WHERE email = ?
+            """,
+            (
+                admin_password_hash,
+                "admin",
+                ADMIN_EMAIL
+            )
+        )
+    else:
         connection.execute(
             """
             INSERT INTO users (email, password_hash, role)
@@ -66,7 +85,7 @@ def initialize_database():
             """,
             (
                 ADMIN_EMAIL,
-                generate_password_hash(admin_password),
+                admin_password_hash,
                 "admin"
             )
         )
@@ -78,8 +97,8 @@ def initialize_database():
     print(f"Test user: {TEST_EMAIL}")
     print(f"Test password: {TEST_PASSWORD}")
     print(f"Admin user: {ADMIN_EMAIL}")
+    print(f"Admin password: {ADMIN_PASSWORD}")
 
 
 if __name__ == "__main__":
     initialize_database()
-    
