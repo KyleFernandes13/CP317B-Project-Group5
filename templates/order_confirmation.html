@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
@@ -27,7 +28,6 @@
             </h1>
 
             <nav>
-
                 <a href="{{ url_for('product_catalogue') }}">
                     Products
                 </a>
@@ -36,10 +36,13 @@
                     Cart
                 </a>
 
+                <a href="{{ url_for('order_history') }}">
+                    Orders
+                </a>
+
                 <a href="{{ url_for('logout') }}">
                     Logout
                 </a>
-
             </nav>
 
         </div>
@@ -50,7 +53,9 @@
 
         <section class="catalogue-header">
 
-            <h2>Order Placed</h2>
+            <h2>
+                Order Placed
+            </h2>
 
             <p>
                 Your order was placed successfully.
@@ -79,6 +84,16 @@
                 <strong>Order Date:</strong>
                 {{ order["created_at"] }}
             </p>
+
+            <a
+                class="button"
+                href="{{ url_for(
+                    'order_details',
+                    order_id=order['id']
+                ) }}"
+            >
+                View Order
+            </a>
 
         </section>
 

@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Shopping Cart</title>
 
     <link
@@ -15,9 +16,12 @@
 <body>
 
     <header class="site-header">
+
         <div class="container header-content">
 
-            <h1 class="logo">Group 5 Store</h1>
+            <h1 class="logo">
+                Group 5 Store
+            </h1>
 
             <nav>
                 <a href="{{ url_for('product_catalogue') }}">
@@ -28,21 +32,31 @@
                     Cart
                 </a>
 
+                <a href="{{ url_for('order_history') }}">
+                    Orders
+                </a>
+
                 <a href="{{ url_for('logout') }}">
                     Logout
                 </a>
             </nav>
 
         </div>
+
     </header>
 
     <main class="container">
 
         <section class="catalogue-header">
-            <h2>Shopping Cart</h2>
+
+            <h2>
+                Shopping Cart
+            </h2>
+
             <p>
                 Review your items and update their quantities.
             </p>
+
         </section>
 
         {% if cart_items %}
@@ -54,6 +68,7 @@
                     <table class="cart-table">
 
                         <thead>
+
                             <tr>
                                 <th scope="col">Product</th>
                                 <th scope="col">Price</th>
@@ -61,6 +76,7 @@
                                 <th scope="col">Subtotal</th>
                                 <th scope="col">Remove</th>
                             </tr>
+
                         </thead>
 
                         <tbody>
@@ -159,12 +175,14 @@
                     action="{{ url_for('place_order') }}"
                     method="post"
                 >
+
                     <button
                         type="submit"
                         class="button"
                     >
                         Place Order
                     </button>
+
                 </form>
 
             </section>
@@ -172,7 +190,11 @@
         {% else %}
 
             <section class="cart-panel">
-                <p>Your cart is empty.</p>
+
+                <p>
+                    Your cart is empty.
+                </p>
+
             </section>
 
         {% endif %}

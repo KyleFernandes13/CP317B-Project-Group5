@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>{{ product["name"] }}</title>
 
     <link
@@ -12,19 +14,37 @@
 </head>
 
 <body>
+
     <header class="site-header">
+
         <div class="container header-content">
+
             <h1 class="logo">Group 5 Store</h1>
 
             <nav>
-                <a href="{{ url_for('product_catalogue') }}">Products</a>
-                <a href="{{ url_for('cart') }}">Cart</a>
-                <a href="{{ url_for('logout') }}">Logout</a>
+                <a href="{{ url_for('product_catalogue') }}">
+                    Products
+                </a>
+
+                <a href="{{ url_for('cart') }}">
+                    Cart
+                </a>
+
+                <a href="{{ url_for('order_history') }}">
+                    Orders
+                </a>
+
+                <a href="{{ url_for('logout') }}">
+                    Logout
+                </a>
             </nav>
+
         </div>
+
     </header>
 
     <main class="container">
+
         <a
             class="back-link"
             href="{{ url_for('product_catalogue') }}"
@@ -35,20 +55,32 @@
         <section class="product-details">
 
             <div class="details-image">
+
                 {% if product["image"] %}
+
                     <img
-                        src="{{ url_for('static', filename='images/' + product['image']) }}"
+                        src="{{ url_for(
+                            'static',
+                            filename='images/' + product['image']
+                        ) }}"
                         alt="{{ product['name'] }}"
                     >
+
                 {% else %}
+
                     <div class="image-placeholder large-placeholder">
                         No Image
                     </div>
+
                 {% endif %}
+
             </div>
 
             <div class="details-info">
-                <h2>{{ product["name"] }}</h2>
+
+                <h2>
+                    {{ product["name"] }}
+                </h2>
 
                 <p class="details-price">
                     ${{ "%.2f"|format(product["price"]) }}
@@ -59,10 +91,16 @@
                 </p>
 
                 <form
-                    action="{{ url_for('add_to_cart', product_id=product['id']) }}"
+                    action="{{ url_for(
+                        'add_to_cart',
+                        product_id=product['id']
+                    ) }}"
                     method="post"
                 >
-                    <label for="quantity">Quantity</label>
+
+                    <label for="quantity">
+                        Quantity
+                    </label>
 
                     <input
                         type="number"
@@ -79,10 +117,15 @@
                     >
                         Add to Cart
                     </button>
+
                 </form>
+
             </div>
 
         </section>
+
     </main>
+
 </body>
+
 </html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Order History</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+
+    <header class="site-header">
+        <div class="container header-content">
+
+            <h1 class="logo">
+                Group 5 Store
+            </h1>
+
+            <nav>
+                <a href="{{ url_for('product_catalogue') }}">
+                    Products
+                </a>
+
+                <a href="{{ url_for('cart') }}">
+                    Cart
+                </a>
+
+                <a href="{{ url_for('order_history') }}">
+                    Orders
+                </a>
+
+                <a href="{{ url_for('logout') }}">
+                    Logout
+                </a>
+            </nav>
+
+        </div>
+    </header>
+
+    <main class="container">
+
+        <section class="catalogue-header">
+            <h2>Order History</h2>
+
+            <p>
+                View your previous orders and their current status.
+            </p>
+        </section>
+
+        {% if orders %}
+
+            <section class="cart-panel">
+
+                <div class="cart-table-container">
+
+                    <table class="cart-table">
+
+                        <thead>
+                            <tr>
+                                <th scope="col">Order</th>
+                                <th scope="col">Date</th>
+                                <th scope="col">Total</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Details</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for order in orders %}
+
+                                <tr>
+
+                                    <td>
+                                        #{{ order["id"] }}
+                                    </td>
+
+                                    <td>
+                                        {{ order["created_at"] }}
+                                    </td>
+
+                                    <td>
+                                        ${{ "%.2f"|format(order["total"]) }}
+                                    </td>
+
+                                    <td>
+                                        {{ order["status"] }}
+                                    </td>
+
+                                    <td>
+                                        <a
+                                            class="button"
+                                            href="{{ url_for(
+                                                'order_details',
+                                                order_id=order['id']
+                                            ) }}"
+                                        >
+                                            View
+                                        </a>
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        {% else %}
+
+            <section class="cart-panel">
+                <p>
+                    You have not placed any orders yet.
+                </p>
+            </section>
+
+        {% endif %}
+
+        <a
+            class="back-link"
+            href="{{ url_for('product_catalogue') }}"
+        >
+            Continue Shopping
+        </a>
+
+    </main>
+
+</body>
+
+</html>

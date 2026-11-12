@@ -214,9 +214,14 @@ def cart():
 
     cart_rows = connection.execute(
         """
-        SELECT cart_items.id, products.name, products.price, cart_items.quantity
+        SELECT
+            cart_items.id,
+            products.name,
+            products.price,
+            cart_items.quantity
         FROM cart_items
-        JOIN products ON cart_items.product_id = products.id
+        JOIN products
+            ON cart_items.product_id = products.id
         WHERE cart_items.user_id = ?
         ORDER BY cart_items.id
         """,
@@ -285,16 +290,27 @@ def add_to_cart(product_id):
             FROM cart_items
             WHERE user_id = ? AND product_id = ?
             """,
-            (session["user_id"], product_id)
+            (
+                session["user_id"],
+                product_id
+            )
         ).fetchone()
 
         if item is None:
             connection.execute(
                 """
-                INSERT INTO cart_items (user_id, product_id, quantity)
+                INSERT INTO cart_items (
+                    user_id,
+                    product_id,
+                    quantity
+                )
                 VALUES (?, ?, ?)
                 """,
-                (session["user_id"], product_id, quantity)
+                (
+                    session["user_id"],
+                    product_id,
+                    quantity
+                )
             )
         else:
             quantity += item["quantity"]
@@ -523,6 +539,90 @@ def order_confirmation(order_id):
     return render_template(
         "order_confirmation.html",
         order=order
+    )
+
+
+@app.route("/orders")
+@login_required
+def order_history():
+    """Display all orders belonging to the current customer."""
+    connection = get_db_connection()
+
+    orders = connection.execute(
+        """
+        SELECT
+            id,
+            total,
+            status,
+            created_at
+        FROM orders
+        WHERE user_id = ?
+        ORDER BY id DESC
+        """,
+        (session["user_id"],)
+    ).fetchall()
+
+    connection.close()
+
+    return render_template(
+        "orders.html",
+        orders=orders
+    )
+
+
+@app.route("/orders/<int:order_id>")
+@login_required
+def order_details(order_id):
+    """Display one order owned by the current customer."""
+    connection = get_db_connection()
+
+    order = connection.execute(
+        """
+        SELECT
+            id,
+            total,
+            status,
+            created_at
+        FROM orders
+        WHERE id = ? AND user_id = ?
+        """,
+        (
+            order_id,
+            session["user_id"]
+        )
+    ).fetchone()
+
+    if order is None:
+        connection.close()
+        abort(404)
+
+    item_rows = connection.execute(
+        """
+        SELECT
+            product_name,
+            price,
+            quantity
+        FROM order_items
+        WHERE order_id = ?
+        ORDER BY id
+        """,
+        (order_id,)
+    ).fetchall()
+
+    connection.close()
+
+    order_items = []
+
+    for row in item_rows:
+        item = dict(row)
+        item["price"] = Decimal(str(item["price"]))
+        item["subtotal"] = item["price"] * item["quantity"]
+        order_items.append(item)
+
+    return render_template(
+        "order_details.html",
+        order=order,
+        order_items=order_items
     )
 
 

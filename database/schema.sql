@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS orders (
                 'Completed'
             )
         ),
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
 
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
