@@ -33,6 +33,12 @@
                     Orders
                 </a>
 
+                {% if session.get("user_role") == "admin" %}
+                    <a href="{{ url_for('admin_orders') }}">
+                        Manage Orders
+                    </a>
+                {% endif %}
+
                 <a href="{{ url_for('logout') }}">
                     Logout
                 </a>

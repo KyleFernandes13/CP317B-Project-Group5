@@ -380,3 +380,25 @@ nav a:hover {
     font-weight: bold;
     margin-bottom: 0;
 }
+
+
+/* Administrator Orders */
+
+.admin-status-form {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.admin-status-form label {
+    width: 100%;
+    font-weight: bold;
+}
+
+.admin-status-form select {
+    padding: 9px;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    font-size: 15px;
+}

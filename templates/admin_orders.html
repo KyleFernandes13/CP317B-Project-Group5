@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Manage Orders</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+
+    <header class="site-header">
+        <div class="container header-content">
+
+            <h1 class="logo">Group 5 Store</h1>
+
+            <nav>
+                <a href="{{ url_for('product_catalogue') }}">
+                    Products
+                </a>
+
+                <a href="{{ url_for('admin_orders') }}">
+                    Manage Orders
+                </a>
+
+                <a href="{{ url_for('logout') }}">
+                    Logout
+                </a>
+            </nav>
+
+        </div>
+    </header>
+
+    <main class="container">
+
+        <section class="catalogue-header">
+            <h2>Manage Orders</h2>
+            <p>Review customer orders and update their status.</p>
+        </section>
+
+        <section class="cart-panel">
+
+            {% if orders %}
+
+                <div class="cart-table-container">
+                    <table class="cart-table">
+
+                        <thead>
+                            <tr>
+                                <th scope="col">Order</th>
+                                <th scope="col">Customer</th>
+                                <th scope="col">Date</th>
+                                <th scope="col">Total</th>
+                                <th scope="col">Current Status</th>
+                                <th scope="col">Update Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for order in orders %}
+                                <tr>
+                                    <td>#{{ order["id"] }}</td>
+                                    <td>{{ order["email"] }}</td>
+                                    <td>{{ order["created_at"] }}</td>
+                                    <td>${{ "%.2f"|format(order["total"]) }}</td>
+                                    <td>{{ order["status"] }}</td>
+                                    <td>
+                                        <form
+                                            class="admin-status-form"
+                                            action="{{ url_for(
+                                                'update_order_status',
+                                                order_id=order['id']
+                                            ) }}"
+                                            method="post"
+                                        >
+                                            <label for="status-{{ order['id'] }}">
+                                                Status for order #{{ order["id"] }}
+                                            </label>
+
+                                            <select
+                                                id="status-{{ order['id'] }}"
+                                                name="status"
+                                                required
+                                            >
+                                                {% for status in statuses %}
+                                                    <option
+                                                        value="{{ status }}"
+                                                        {% if status == order["status"] %}selected{% endif %}
+                                                    >
+                                                        {{ status }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+
+                                            <button type="submit" class="button">
+                                                Update
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+
+                    </table>
+                </div>
+
+            {% else %}
+
+                <p>No customer orders yet.</p>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+
+</body>
+
+</html>

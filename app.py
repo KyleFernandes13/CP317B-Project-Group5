@@ -49,6 +49,21 @@ def login_required(view_function):
     return wrapped_view
 
 
+def admin_required(view_function):
+    """Require an administrator to access an order-management page."""
+    @wraps(view_function)
+    def wrapped_view(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+
+        if session.get("user_role") != "admin":
+            abort(403)
+
+        return view_function(*args, **kwargs)
+
+    return wrapped_view
+
+
 def add_sample_products():
     """Add sample products if the products table is currently empty."""
     connection = get_db_connection()
@@ -624,6 +639,74 @@ def order_details(order_id):
         order=order,
         order_items=order_items
     )
+
+
+@app.route("/admin/orders")
+@admin_required
+def admin_orders():
+    """Display customer orders for the administrator."""
+    connection = get_db_connection()
+
+    orders = connection.execute(
+        """
+        SELECT
+            orders.id,
+            users.email,
+            orders.created_at,
+            orders.total,
+            orders.status
+        FROM orders
+        JOIN users
+            ON orders.user_id = users.id
+        ORDER BY orders.id DESC
+        """
+    ).fetchall()
+
+    connection.close()
+
+    return render_template(
+        "admin_orders.html",
+        orders=orders,
+        statuses=("Placed", "Processing", "Shipped", "Completed")
+    )
+
+
+@app.route("/admin/orders/<int:order_id>/status", methods=["POST"])
+@admin_required
+def update_order_status(order_id):
+    """Update the selected order with a valid stored status."""
+    status = request.form.get("status", "")
+
+    if status not in ("Placed", "Processing", "Shipped", "Completed"):
+        abort(
+            400,
+            description="Select a valid order status."
+        )
+
+    connection = get_db_connection()
+
+    try:
+        result = connection.execute(
+            """
+            UPDATE orders
+            SET status = ?
+            WHERE id = ?
+            """,
+            (
+                status,
+                order_id
+            )
+        )
+
+        if result.rowcount == 0:
+            abort(404)
+
+        connection.commit()
+
+    finally:
+        connection.close()
+
+    return redirect(url_for("admin_orders"))
 
 
 if __name__ == "__main__":
