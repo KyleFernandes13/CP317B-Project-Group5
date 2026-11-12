@@ -33,6 +33,7 @@ def get_db_connection():
     """Create and return a connection to the SQLite database."""
     connection = sqlite3.connect(DATABASE)
     connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA foreign_keys = ON")
     return connection
 
 
@@ -246,10 +247,16 @@ def get_cart_quantity():
     try:
         quantity = int(request.form.get("quantity", ""))
     except ValueError:
-        abort(400, description="Quantity must be a positive whole number.")
+        abort(
+            400,
+            description="Quantity must be a positive whole number."
+        )
 
     if quantity < 1:
-        abort(400, description="Quantity must be a positive whole number.")
+        abort(
+            400,
+            description="Quantity must be a positive whole number."
+        )
 
     return quantity
 
@@ -273,7 +280,11 @@ def add_to_cart(product_id):
             abort(404)
 
         item = connection.execute(
-            "SELECT id, quantity FROM cart_items WHERE user_id = ? AND product_id = ?",
+            """
+            SELECT id, quantity
+            FROM cart_items
+            WHERE user_id = ? AND product_id = ?
+            """,
             (session["user_id"], product_id)
         ).fetchone()
 
@@ -289,11 +300,20 @@ def add_to_cart(product_id):
             quantity += item["quantity"]
 
             connection.execute(
-                "UPDATE cart_items SET quantity = ? WHERE id = ? AND user_id = ?",
-                (quantity, item["id"], session["user_id"])
+                """
+                UPDATE cart_items
+                SET quantity = ?
+                WHERE id = ? AND user_id = ?
+                """,
+                (
+                    quantity,
+                    item["id"],
+                    session["user_id"]
+                )
             )
 
         connection.commit()
+
     finally:
         connection.close()
 
@@ -309,14 +329,23 @@ def update_cart_item(item_id):
 
     try:
         result = connection.execute(
-            "UPDATE cart_items SET quantity = ? WHERE id = ? AND user_id = ?",
-            (quantity, item_id, session["user_id"])
+            """
+            UPDATE cart_items
+            SET quantity = ?
+            WHERE id = ? AND user_id = ?
+            """,
+            (
+                quantity,
+                item_id,
+                session["user_id"]
+            )
         )
 
         if result.rowcount == 0:
             abort(404)
 
         connection.commit()
+
     finally:
         connection.close()
 
@@ -331,18 +360,170 @@ def remove_cart_item(item_id):
 
     try:
         result = connection.execute(
-            "DELETE FROM cart_items WHERE id = ? AND user_id = ?",
-            (item_id, session["user_id"])
+            """
+            DELETE FROM cart_items
+            WHERE id = ? AND user_id = ?
+            """,
+            (
+                item_id,
+                session["user_id"]
+            )
         )
 
         if result.rowcount == 0:
             abort(404)
 
         connection.commit()
+
     finally:
         connection.close()
 
     return redirect(url_for("cart"))
+
+
+@app.route("/orders/place", methods=["POST"])
+@login_required
+def place_order():
+    """Create an order from the current customer's shopping cart."""
+    connection = get_db_connection()
+
+    try:
+        connection.execute("BEGIN IMMEDIATE")
+
+        cart_rows = connection.execute(
+            """
+            SELECT
+                cart_items.product_id,
+                products.name,
+                products.price,
+                cart_items.quantity
+            FROM cart_items
+            JOIN products
+                ON cart_items.product_id = products.id
+            WHERE cart_items.user_id = ?
+            ORDER BY cart_items.id
+            """,
+            (session["user_id"],)
+        ).fetchall()
+
+        if not cart_rows:
+            connection.rollback()
+            abort(
+                400,
+                description="Your cart is empty."
+            )
+
+        total = Decimal("0.00")
+
+        for item in cart_rows:
+            price = Decimal(str(item["price"]))
+            total += price * item["quantity"]
+
+        order_cursor = connection.execute(
+            """
+            INSERT INTO orders (
+                user_id,
+                total,
+                status,
+                created_at
+            )
+            VALUES (?, ?, ?, datetime('now', 'localtime'))
+            """,
+            (
+                session["user_id"],
+                float(total),
+                "Placed"
+            )
+        )
+
+        order_id = order_cursor.lastrowid
+
+        order_items = []
+
+        for item in cart_rows:
+            order_items.append(
+                (
+                    order_id,
+                    item["product_id"],
+                    item["name"],
+                    item["price"],
+                    item["quantity"]
+                )
+            )
+
+        connection.executemany(
+            """
+            INSERT INTO order_items (
+                order_id,
+                product_id,
+                product_name,
+                price,
+                quantity
+            )
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            order_items
+        )
+
+        connection.execute(
+            """
+            DELETE FROM cart_items
+            WHERE user_id = ?
+            """,
+            (session["user_id"],)
+        )
+
+        connection.commit()
+
+    except sqlite3.Error:
+        connection.rollback()
+        abort(
+            500,
+            description="Unable to place order."
+        )
+
+    finally:
+        connection.close()
+
+    return redirect(
+        url_for(
+            "order_confirmation",
+            order_id=order_id
+        )
+    )
+
+
+@app.route("/orders/<int:order_id>/confirmation")
+@login_required
+def order_confirmation(order_id):
+    """Display confirmation for an order owned by the current customer."""
+    connection = get_db_connection()
+
+    order = connection.execute(
+        """
+        SELECT
+            id,
+            total,
+            status,
+            created_at
+        FROM orders
+        WHERE id = ? AND user_id = ?
+        """,
+        (
+            order_id,
+            session["user_id"]
+        )
+    ).fetchone()
+
+    connection.close()
+
+    if order is None:
+        abort(404)
+
+    return render_template(
+        "order_confirmation.html",
+        order=order
+    )
 
 
 if __name__ == "__main__":
