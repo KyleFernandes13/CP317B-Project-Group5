@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -19,11 +20,10 @@
 
         <div class="container header-content">
 
-            <h1 class="logo">
-                Group 5 Store
-            </h1>
+            <h1 class="logo">Group 5 Store</h1>
 
             <nav>
+
                 <a href="{{ url_for('product_catalogue') }}">
                     Products
                 </a>
@@ -39,6 +39,7 @@
                 <a href="{{ url_for('logout') }}">
                     Logout
                 </a>
+
             </nav>
 
         </div>
@@ -49,13 +50,9 @@
 
         <section class="catalogue-header">
 
-            <h2>
-                Shopping Cart
-            </h2>
+            <h2>Shopping Cart</h2>
 
-            <p>
-                Review your items and update their quantities.
-            </p>
+            <p>Review your items and update their quantities.</p>
 
         </section>
 
@@ -86,11 +83,11 @@
                                 <tr>
 
                                     <td>
-                                        {{ item["name"] }}
+                                        {{ item['name'] }}
                                     </td>
 
                                     <td>
-                                        ${{ "%.2f"|format(item["price"]) }}
+                                        ${{ '%.2f'|format(item['price']) }}
                                     </td>
 
                                     <td>
@@ -108,7 +105,7 @@
                                                 class="cart-quantity-label"
                                                 for="quantity-{{ item['id'] }}"
                                             >
-                                                Quantity for {{ item["name"] }}
+                                                Quantity for {{ item['name'] }}
                                             </label>
 
                                             <input
@@ -132,7 +129,7 @@
                                     </td>
 
                                     <td>
-                                        ${{ "%.2f"|format(item["subtotal"]) }}
+                                        ${{ '%.2f'|format(item['subtotal']) }}
                                     </td>
 
                                     <td>
@@ -168,22 +165,15 @@
                 </div>
 
                 <p class="cart-total">
-                    Total: ${{ "%.2f"|format(total) }}
+                    Total: ${{ '%.2f'|format(total) }}
                 </p>
 
-                <form
-                    action="{{ url_for('place_order') }}"
-                    method="post"
+                <a
+                    class="button"
+                    href="{{ url_for('checkout') }}"
                 >
-
-                    <button
-                        type="submit"
-                        class="button"
-                    >
-                        Place Order
-                    </button>
-
-                </form>
+                    Proceed to Checkout
+                </a>
 
             </section>
 
@@ -191,9 +181,7 @@
 
             <section class="cart-panel">
 
-                <p>
-                    Your cart is empty.
-                </p>
+                <p>Your cart is empty.</p>
 
             </section>
 

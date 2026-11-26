@@ -1,5 +1,5 @@
-"""Main Flask application for the E-Commerce Store Management System."""
 
+"""Main Flask application for the E-Commerce Store Management System."""
 # pylint: disable=too-many-lines
 
 import os
@@ -417,12 +417,136 @@ def remove_cart_item(item_id):
     return redirect(url_for("cart"))
 
 
-# Customer orders - Sprint 2
+# Simulated Checkout - ORD-4
+
+CHECKOUT_FIELDS = {
+    "full_name": "Full name",
+    "address": "Street address",
+    "city": "City",
+    "province": "Province",
+    "postal_code": "Postal code"
+}
+
+PAYMENT_METHODS = {
+    "mock_card": "Simulated Credit Card",
+    "mock_paypal": "Simulated PayPal",
+    "mock_debit": "Simulated Debit Card"
+}
+
+
+def checkout_csrf_token():
+    """Create a security token for the checkout form."""
+    if "checkout_csrf" not in session:
+        session["checkout_csrf"] = secrets.token_hex(32)
+
+    return session["checkout_csrf"]
+
+
+def validate_checkout_form():
+    """Validate fictional shipping information and mock payment."""
+
+    form = {
+        field: request.form.get(field, "").strip()
+        for field in CHECKOUT_FIELDS
+    }
+
+    form["payment_method"] = request.form.get(
+        "payment_method", ""
+    )
+
+    for field, label in CHECKOUT_FIELDS.items():
+
+        if not form[field]:
+            return form, f"{label} is required."
+
+        if len(form[field]) > 200:
+            return form, f"{label} is too long."
+
+    if form["payment_method"] not in PAYMENT_METHODS:
+        return form, "Please select a valid payment method."
+
+    return form, None
+
+
+def render_checkout_page(form=None, error=None):
+    """Display the order summary using current database prices."""
+
+    connection = get_db_connection()
+
+    try:
+        cart_rows = connection.execute(
+            """
+            SELECT
+                products.name,
+                products.price,
+                cart_items.quantity
+            FROM cart_items
+            JOIN products
+                ON cart_items.product_id = products.id
+            WHERE cart_items.user_id = ?
+            ORDER BY cart_items.id
+            """,
+            (session["user_id"],)
+        ).fetchall()
+
+    finally:
+        connection.close()
+
+    if not cart_rows:
+        abort(400, description="Your cart is empty.")
+
+    cart_items = []
+    total = Decimal("0.00")
+
+    for row in cart_rows:
+        item = dict(row)
+
+        item["price"] = Decimal(str(item["price"]))
+        item["subtotal"] = item["price"] * item["quantity"]
+
+        total += item["subtotal"]
+        cart_items.append(item)
+
+    return render_template(
+        "checkout.html",
+        cart_items=cart_items,
+        total=total,
+        form=form or {},
+        error=error,
+        payment_methods=PAYMENT_METHODS,
+        csrf_token=checkout_csrf_token()
+    )
+
+
+@app.route("/checkout")
+@login_required
+def checkout():
+    """Display the simulated checkout page."""
+
+    return render_checkout_page()
+
+
+# Customer orders - Sprint 2 and Sprint 3
 
 @app.route("/orders/place", methods=["POST"])
 @login_required
 def place_order():
-    """Convert the customer's cart into a stored order."""
+    """Validate checkout and convert the cart into a stored order."""
+
+    expected_token = session.get("checkout_csrf", "")
+    submitted_token = request.form.get("csrf_token", "")
+
+    if not expected_token or not secrets.compare_digest(
+        expected_token.encode("utf-8"),
+        submitted_token.encode("utf-8")
+    ):
+        abort(400, description="Invalid checkout submission.")
+
+    form, error = validate_checkout_form()
+
+    if error:
+        return render_checkout_page(form, error), 400
+
     connection = get_db_connection()
 
     try:
@@ -452,7 +576,8 @@ def place_order():
 
             for item in cart_rows:
                 total += (
-                    Decimal(str(item["price"])) * item["quantity"]
+                    Decimal(str(item["price"]))
+                    * item["quantity"]
                 )
 
             cursor = connection.execute(
@@ -510,6 +635,8 @@ def place_order():
 
     finally:
         connection.close()
+
+    session.pop("checkout_csrf", None)
 
     return redirect(
         url_for("order_confirmation", order_id=order_id)
