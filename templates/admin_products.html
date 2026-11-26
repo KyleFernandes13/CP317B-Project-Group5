@@ -1,0 +1,165 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Manage Products</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+
+    <header class="site-header">
+        <div class="container header-content">
+
+            <h1 class="logo">Group 5 Store</h1>
+
+            <nav>
+                <a href="{{ url_for('product_catalogue') }}">
+                    Products
+                </a>
+
+                <a href="{{ url_for('admin_products') }}">
+                    Manage Products
+                </a>
+
+                <a href="{{ url_for('admin_orders') }}">
+                    Manage Orders
+                </a>
+
+                <a href="{{ url_for('logout') }}">
+                    Logout
+                </a>
+            </nav>
+
+        </div>
+    </header>
+
+    <main class="container">
+
+        <section class="catalogue-header">
+            <h2>Manage Products</h2>
+
+            <p>Add, edit, or remove products from the store.</p>
+        </section>
+
+        <p>
+            <a
+                class="button"
+                href="{{ url_for('admin_add_product') }}"
+            >
+                Add Product
+            </a>
+        </p>
+
+        <section class="cart-panel">
+
+            {% if products %}
+
+                <div class="cart-table-container">
+
+                    <table class="cart-table">
+
+                        <thead>
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Product</th>
+                                <th scope="col">Description</th>
+                                <th scope="col">Price</th>
+                                <th scope="col">Image</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for product in products %}
+
+                                <tr>
+
+                                    <td>{{ product["id"] }}</td>
+
+                                    <td>{{ product["name"] }}</td>
+
+                                    <td>{{ product["description"] }}</td>
+
+                                    <td>
+                                        ${{ "%.2f"|format(product["price"]) }}
+                                    </td>
+
+                                    <td>
+                                        {% if product["image"] %}
+                                            {{ product["image"] }}
+                                        {% else %}
+                                            No Image
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+
+                                        <a
+                                            class="button"
+                                            href="{{ url_for(
+                                                'admin_edit_product',
+                                                product_id=product['id']
+                                            ) }}"
+                                        >
+                                            Edit
+                                        </a>
+
+                                        <form
+                                            action="{{ url_for(
+                                                'admin_delete_product',
+                                                product_id=product['id']
+                                            ) }}"
+                                            method="post"
+                                            onsubmit="return confirm('Remove this product from the store?');"
+                                        >
+
+                                            <input
+                                                type="hidden"
+                                                name="csrf_token"
+                                                value="{{ csrf_token }}"
+                                            >
+
+                                            <button
+                                                class="button"
+                                                type="submit"
+                                            >
+                                                Remove
+                                            </button>
+
+                                        </form>
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <p>No products are currently available.</p>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+
+</body>
+
+</html>
