@@ -74,37 +74,37 @@ def add_sample_products():
                         "Wireless Headphones",
                         "Comfortable wireless headphones with clear sound and long battery life.",
                         79.99,
-                        ""
+                        "headphones.png"
                     ),
                     (
                         "Mechanical Keyboard",
                         "A compact mechanical keyboard designed for gaming and everyday use.",
                         89.99,
-                        ""
+                        "keyboard.png"
                     ),
                     (
                         "Wireless Mouse",
                         "Lightweight wireless mouse with adjustable sensitivity.",
                         39.99,
-                        ""
+                        "mouse.png"
                     ),
                     (
                         "USB-C Hub",
                         "Multi-port USB-C hub with USB, HDMI, and card reader connections.",
                         49.99,
-                        ""
+                        "usb_hub.png"
                     ),
                     (
                         "Laptop Stand",
                         "Adjustable aluminum laptop stand for a more comfortable workspace.",
                         34.99,
-                        ""
+                        "laptop_stand.png"
                     ),
                     (
                         "Webcam",
                         "1080p webcam with built-in microphone for video calls and meetings.",
                         59.99,
-                        ""
+                        "webcam.png"
                     )
                 ]
 
@@ -185,6 +185,50 @@ def logout():
 def home():
     """Redirect users to the product catalogue."""
     return redirect(url_for("product_catalogue"))
+
+
+# Product Images - UI-3
+
+@app.template_global()
+def product_image_url(filename):
+    """Return a valid local product image or a fallback placeholder."""
+
+    image_directory = (
+        BASE_DIR / "static" / "images"
+    ).resolve()
+
+    fallback = url_for(
+        "static",
+        filename="images/placeholder.png"
+    )
+
+    if not filename or not filename.strip():
+        return fallback
+
+    filename = filename.strip()
+
+    if "/" in filename or "\\" in filename or "\0" in filename:
+        return fallback
+
+    try:
+        image_path = (image_directory / filename).resolve()
+
+        if (
+            image_path.parent == image_directory
+            and image_path.is_file()
+            and image_path.suffix.lower() in {
+                ".png", ".jpg", ".jpeg", ".webp", ".gif"
+            }
+        ):
+            return url_for(
+                "static",
+                filename="images/" + filename
+            )
+
+    except (OSError, RuntimeError, ValueError):
+        return fallback
+
+    return fallback
 
 
 # Product catalogue

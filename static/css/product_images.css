@@ -1,0 +1,52 @@
+
+/* Product Images - UI-3 */
+
+.product-image {
+    width: 100%;
+    height: 220px;
+    overflow: hidden;
+    background-color: #f4f6f8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.product-image img.catalogue-product-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+}
+
+.details-image {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    background-color: #f4f6f8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.details-image img.details-product-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 450px;
+    aspect-ratio: 4 / 3;
+    object-fit: contain;
+    object-position: center;
+}
+
+@media (max-width: 600px) {
+
+    .product-image {
+        height: 190px;
+    }
+
+    .details-image img.details-product-image {
+        max-height: 320px;
+    }
+
+}
