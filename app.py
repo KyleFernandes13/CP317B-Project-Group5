@@ -7,6 +7,7 @@ import secrets
 import sqlite3
 from decimal import Decimal, InvalidOperation
 from functools import wraps
+from math import isfinite
 from pathlib import Path
 
 from flask import (
@@ -120,14 +121,33 @@ def add_sample_products():
         connection.close()
 
 
-def get_products():
-    """Return the current product catalogue."""
+def get_products(search="", min_price=None, max_price=None, sort="default"):
+    """Return products matching the catalogue filters."""
+    query = "SELECT * FROM products WHERE 1 = 1"
+    parameters = []
+
+    if search:
+        query += " AND instr(lower(name), lower(?)) > 0"
+        parameters.append(search)
+
+    if min_price is not None:
+        query += " AND price >= ?"
+        parameters.append(min_price)
+
+    if max_price is not None:
+        query += " AND price <= ?"
+        parameters.append(max_price)
+
+    sort_options = {
+        "default": "id",
+        "price_asc": "price ASC, id ASC",
+        "price_desc": "price DESC, id ASC"
+    }
+    query += " ORDER BY " + sort_options.get(sort, "id")
     connection = get_db_connection()
 
     try:
-        return connection.execute(
-            "SELECT * FROM products ORDER BY id"
-        ).fetchall()
+        return connection.execute(query, parameters).fetchall()
 
     finally:
         connection.close()
@@ -236,11 +256,50 @@ def product_image_url(filename):
 @app.route("/products")
 @login_required
 def product_catalogue():
-    """Display available products."""
+    """Display products with optional name, price, and sort filters."""
+    search = request.args.get("search", "").strip()
+    min_price_text = request.args.get("min_price", "").strip()
+    max_price_text = request.args.get("max_price", "").strip()
+    sort = request.args.get("sort", "default")
+    error = None
+    min_price = None
+    max_price = None
+
+    if sort not in ("default", "price_asc", "price_desc"):
+        sort = "default"
+
+    try:
+        if min_price_text:
+            min_price = float(min_price_text)
+
+        if max_price_text:
+            max_price = float(max_price_text)
+
+        for price in (min_price, max_price):
+            if price is not None and (not isfinite(price) or price < 0):
+                error = "Prices must be non-negative numbers."
+
+        if error is None and min_price is not None and max_price is not None:
+            if min_price > max_price:
+                error = "Minimum price cannot be greater than maximum price."
+
+    except ValueError:
+        error = "Prices must be non-negative numbers."
+
+    products = []
+
+    if error is None:
+        products = get_products(search, min_price, max_price, sort)
+
     return render_template(
         "products.html",
-        products=get_products()
-    )
+        products=products,
+        search=search,
+        min_price=min_price_text,
+        max_price=max_price_text,
+        sort=sort,
+        error=error
+    ), 400 if error else 200
 
 
 @app.route("/products/<int:product_id>")

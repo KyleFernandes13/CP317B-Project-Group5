@@ -69,6 +69,70 @@
 
         </section>
 
+        <form
+            class="catalogue-filters"
+            action="{{ url_for('product_catalogue') }}"
+            method="get"
+        >
+            <div class="catalogue-filter-field">
+                <label for="search">Product name</label>
+                <input
+                    type="search"
+                    id="search"
+                    name="search"
+                    value="{{ search }}"
+                >
+            </div>
+
+            <div class="catalogue-filter-field">
+                <label for="min-price">Minimum price</label>
+                <input
+                    type="number"
+                    id="min-price"
+                    name="min_price"
+                    value="{{ min_price }}"
+                    min="0"
+                    step="any"
+                >
+            </div>
+
+            <div class="catalogue-filter-field">
+                <label for="max-price">Maximum price</label>
+                <input
+                    type="number"
+                    id="max-price"
+                    name="max_price"
+                    value="{{ max_price }}"
+                    min="0"
+                    step="any"
+                >
+            </div>
+
+            <div class="catalogue-filter-field">
+                <label for="sort">Sort by</label>
+                <select id="sort" name="sort">
+                    <option value="default" {% if sort == "default" %}selected{% endif %}>
+                        Default order
+                    </option>
+                    <option value="price_asc" {% if sort == "price_asc" %}selected{% endif %}>
+                        Price: Low to High
+                    </option>
+                    <option value="price_desc" {% if sort == "price_desc" %}selected{% endif %}>
+                        Price: High to Low
+                    </option>
+                </select>
+            </div>
+
+            <button type="submit" class="button">Apply Filters</button>
+            <a class="button button-secondary" href="{{ url_for('product_catalogue') }}">
+                Clear Filters
+            </a>
+        </form>
+
+        {% if error %}
+            <p class="error-message" role="alert">{{ error }}</p>
+        {% endif %}
+
         <section class="product-grid">
 
             {% for product in products %}
@@ -121,7 +185,13 @@
 
             {% else %}
 
-                <p>No products are currently available.</p>
+                {% if not error %}
+                    {% if search or min_price or max_price %}
+                        <p>No products match your search or price filters.</p>
+                    {% else %}
+                        <p>No products are currently available.</p>
+                    {% endif %}
+                {% endif %}
 
             {% endfor %}
 
