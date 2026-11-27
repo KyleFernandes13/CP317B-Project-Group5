@@ -1047,3 +1047,31 @@ table tbody tr:hover {
         transform: none;
     }
 }
+
+/* Product Search and Filtering */
+
+.catalogue-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.catalogue-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1 1 160px;
+    min-width: 0;
+}
+
+.catalogue-filter-field input,
+.catalogue-filter-field select {
+    width: 100%;
+}
